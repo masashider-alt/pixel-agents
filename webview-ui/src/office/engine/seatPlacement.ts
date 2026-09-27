@@ -36,6 +36,18 @@ export function anchorTile(
     : { col: anchor.tileCol, row: anchor.tileRow };
 }
 
+/** Free seat inside Area `label` closest to a tile, or null (department rooms). */
+export function closestFreeSeatInArea(
+  seats: ReadonlyMap<string, SeatLike>,
+  zoneOf: (uid: string) => string | null,
+  label: string,
+  col: number,
+  row: number,
+): string | null {
+  const inArea = new Map([...seats].filter(([uid]) => zoneOf(uid) === label));
+  return closestFreeSeat(inArea, col, row);
+}
+
 /** Free seat closest (Manhattan) to a tile — seats teammates beside their lead. */
 export function closestFreeSeat(
   seats: ReadonlyMap<string, SeatLike>,

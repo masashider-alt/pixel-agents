@@ -517,8 +517,10 @@ export class HookEventHandler {
     // double-track parents once JSONL catches up.
     const parentTools = this.getSubagentToolSet();
     let parentToolId: string | undefined;
+    // Skip spawns that already have their sub-agent, so parallel spawns each
+    // get their own SubagentStart (in spawn order) instead of all hitting the first.
     for (const [toolId, toolName] of agent.activeToolNames) {
-      if (parentTools.has(toolName)) {
+      if (parentTools.has(toolName) && !agent.activeSubagentToolNames.get(toolId)?.size) {
         parentToolId = toolId;
         break;
       }

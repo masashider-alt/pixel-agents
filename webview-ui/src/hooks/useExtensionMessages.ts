@@ -280,6 +280,7 @@ export function useExtensionMessages(
             ch.teamName = teamName ?? parentCh?.teamName;
             ch.agentName = teammateName;
           }
+          os.assignDepartment(id, teammateName);
         } else {
           const palette = msg.palette as number | undefined;
           const hueShift = msg.hueShift as number | undefined;
@@ -559,6 +560,8 @@ export function useExtensionMessages(
           const set = (backgroundParentToolIdsRef.current[id] ??= new Set());
           set.add(parentToolId);
         }
+        // SubagentStart hook reports the agent type as "Subtask: <agentType>".
+        if (status.startsWith('Subtask: ')) os.assignDepartment(subId, status.slice(9));
         const subToolName = extractToolName(status);
         os.setAgentTool(subId, subToolName);
         os.setAgentActive(subId, true);

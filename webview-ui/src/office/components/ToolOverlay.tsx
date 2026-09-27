@@ -131,7 +131,7 @@ export function ToolOverlay({
         const isSub = ch.isSubagent;
 
         // Only show for hovered or selected agents (unless always-show is on)
-        if (!alwaysShowOverlay && !isSelected && !isHovered) return null;
+        if (!alwaysShowOverlay && !isSelected && !isHovered && !ch.department) return null;
 
         // Position above character
         const sittingOffset = ch.state === CharacterState.TYPE ? CHARACTER_SITTING_OFFSET_PX : 0;
@@ -202,7 +202,8 @@ export function ToolOverlay({
         }
 
         // Team info
-        const teamRoleLabel = ch.isTeamLead ? 'LEAD' : ch.agentName || null;
+        const teamRoleLabel =
+          ch.department?.label ?? (ch.isTeamLead ? 'LEAD' : ch.agentName || null);
         const hasExtraLines = !!(ch.folderName || teamRoleLabel);
 
         // Context gauge. Every agent gets one — lead, teammate, adopted,
@@ -238,7 +239,8 @@ export function ToolOverlay({
                     className="overflow-hidden text-ellipsis block leading-none"
                     style={{
                       fontSize: '18px',
-                      color: ch.isTeamLead ? TEAM_LEAD_COLOR : TEAM_ROLE_COLOR,
+                      color:
+                        ch.department?.color ?? (ch.isTeamLead ? TEAM_LEAD_COLOR : TEAM_ROLE_COLOR),
                       fontWeight: ch.isTeamLead ? 'bold' : undefined,
                     }}
                   >

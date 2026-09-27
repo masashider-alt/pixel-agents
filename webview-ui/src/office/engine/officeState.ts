@@ -5,6 +5,7 @@ import {
   CHARACTER_HIT_HALF_WIDTH,
   CHARACTER_HIT_HEIGHT,
   CHARACTER_SITTING_OFFSET_PX,
+  DEPARTMENTS,
   DISMISS_BUBBLE_FAST_FADE_SEC,
   FURNITURE_ANIM_INTERVAL_SEC,
   GREETER_ID,
@@ -41,7 +42,7 @@ import { CharacterState, Direction, PetState, TILE_SIZE } from '../types.js';
 import { createCharacter, updateCharacter } from './characters.js';
 import { advanceMatrixEffect, startMatrixEffect } from './matrixEffectState.js';
 import { createPet, updatePet } from './petEntity.js';
-import { anchorTile, closestFreeSeat } from './seatPlacement.js';
+import { anchorTile, closestFreeSeat, closestFreeSeatInArea } from './seatPlacement.js';
 
 /** Internal helper: facing-tile coords for a seat. Returns null for invalid direction. */
 function seatFacingOffset(direction: Direction): { dCol: number; dRow: number } {
@@ -365,7 +366,8 @@ export class OfficeState {
     }
     if (freeSeats.length === 0) return null;
 
-    const areaLabels = folderName ? this.areaMappings[folderName] : undefined;
+    // AI社員の会社: unmapped folders default to the 社長室 (`main`) Area.
+    const areaLabels = (folderName && this.areaMappings[folderName]) || ['main'];
 
     // Stage 1 — in-area seats for the folder's mapped Area labels.
     if (areaLabels && areaLabels.length > 0) {
@@ -492,6 +494,7 @@ export class OfficeState {
       startMatrixEffect(ch, 'spawn');
     }
     this.characters.set(id, ch);
+    if (nearAgentId === undefined) this.assignDepartment(id, 'main');
   }
 
   // ── Greeter ───────────────────────────────────────────────────
@@ -684,6 +687,29 @@ export class OfficeState {
     ch.frame = 0;
     ch.frameTimer = 0;
     return true;
+  }
+
+  /**
+   * AI社員の会社: dress a character as its department and walk it to the
+   * nearest free seat in the Area labeled `agentType`. Unknown types (派遣)
+   * are left untouched; no matching Area keeps the current seat.
+   */
+  assignDepartment(id: number, agentType: string | undefined): void {
+    const ch = this.characters.get(id);
+    const dept = agentType ? DEPARTMENTS[agentType] : undefined;
+    if (!ch || !dept) return;
+    ch.department = dept;
+    ch.palette = dept.palette;
+    ch.hueShift = 0;
+    if (ch.seatId && this.seatZone(ch.seatId) === agentType) return;
+    const target = closestFreeSeatInArea(
+      this.seats,
+      (uid) => this.seatZone(uid),
+      agentType!,
+      ch.tileCol,
+      ch.tileRow,
+    );
+    if (target) this.reassignSeat(id, target);
   }
 
   /** Create a sub-agent character with the parent's palette. Returns the sub-agent ID. */
@@ -1069,6 +1095,10 @@ export class OfficeState {
     // path addAgent runs for inline teammates. Cluster it now, once, on first link.
     if (wasUnlinked && leadAgentId !== undefined && !isTeamLead) {
       this.reseatNextToLead(id, leadAgentId);
+    }
+    if (leadAgentId !== undefined) {
+      ch.department = undefined; // drop the 社長室 default a plain agent got
+      this.assignDepartment(id, agentName);
     }
   }
 

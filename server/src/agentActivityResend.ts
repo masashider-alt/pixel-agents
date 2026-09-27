@@ -66,6 +66,21 @@ export function resendAgentActivity(
       });
     }
 
+    // 3b. SubagentStart-hook rows ("Subtask: <agentType>") so a reloaded
+    // panel can re-dress sub-agents as their department.
+    for (const [parentToolId, subNames] of agent.activeSubagentToolNames) {
+      for (const [toolId, agentType] of subNames) {
+        if (!toolId.startsWith('hook-sub-')) continue;
+        send({
+          type: 'subagentToolStart',
+          id,
+          parentToolId,
+          toolId,
+          status: `Subtask: ${agentType}`,
+        });
+      }
+    }
+
     // 4. Waiting status
     if (agent.isWaiting) {
       send({

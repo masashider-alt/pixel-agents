@@ -857,4 +857,24 @@ describe('HookEventHandler', () => {
       }
     });
   });
+
+  it('parallel SubagentStarts each claim their own spawn in order', () => {
+    const agent = createTestAgent({ id: 1 });
+    agent.activeToolNames.set('toolu_a', 'Agent');
+    agent.activeToolNames.set('toolu_b', 'Agent');
+    agents.set(1, agent);
+    handler.registerAgent('sess-1', 1);
+    for (const agent_type of ['kaihatsu', 'hisho']) {
+      handler.handleEvent('claude', {
+        hook_event_name: 'SubagentStart',
+        session_id: 'sess-1',
+        agent_type,
+      });
+    }
+    const starts = mockWebview.messages.filter((m) => m.type === 'subagentToolStart');
+    expect(starts.map((m) => [m.parentToolId, m.status])).toEqual([
+      ['toolu_a', 'Subtask: kaihatsu'],
+      ['toolu_b', 'Subtask: hisho'],
+    ]);
+  });
 });

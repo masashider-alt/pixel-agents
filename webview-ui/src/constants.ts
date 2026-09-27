@@ -312,3 +312,22 @@ export const PET_THUMB_SCALE_MARGIN = 0.85;
 export const EMPTY_SPRITE_THUMBNAIL_BG = '#333';
 /** Maximum string length for a PlacedPet.id (defends against pathologically-long layout entries). */
 export const MAX_PET_ID_LENGTH = 128;
+
+/**
+ * AI社員の会社: agentType (sub-agent name / Area label) → department.
+ * `main` is the top-level Claude (社長室). Anything not listed keeps the
+ * default behaviour (派遣). Colors follow ~/dev/ai-company/.claude/agents/*.md.
+ */
+export interface Department {
+  label: string;
+  color: string;
+  palette: number;
+}
+
+export const DEPARTMENTS: Record<string, Department> = {
+  main: { label: '社長室', color: '#e0c060', palette: 0 },
+  hisho: { label: '秘書室', color: '#ff8fc8', palette: 1 },
+  kyomu: { label: '教務部', color: '#6fd08c', palette: 3 },
+  kaihatsu: { label: '開発部', color: '#6aa8ff', palette: 4 },
+  chosa: { label: '調査部', color: '#ffa04d', palette: 2 },
+};
