@@ -228,6 +228,26 @@ export function processTranscriptLine(
                 isTeammateSpawn: isTeammateSpawn || undefined,
               });
             }
+            // AI社員の会社: the SubagentStart hook usually lands BEFORE this JSONL
+            // line (so it finds no parent and drops agent_type). Emit the same
+            // "Subtask: <agentType>" row here from the spawn's subagent_type.
+            const subagentType = block.input?.subagent_type;
+            if (
+              isSubagentSpawn &&
+              !isTeammateSpawn &&
+              typeof subagentType === 'string' &&
+              !(block.input?.run_in_background === true && agent.teamName)
+            ) {
+              const subToolId = `hook-sub-${subagentType}-${block.id}`;
+              agent.activeSubagentToolNames.set(block.id, new Map([[subToolId, subagentType]]));
+              agents.broadcast({
+                type: 'subagentToolStart',
+                id: agentId,
+                parentToolId: block.id,
+                toolId: subToolId,
+                status: `Subtask: ${subagentType}`,
+              });
+            }
           }
         }
         // Skip heuristic timer when hooks are active OR for teammates.

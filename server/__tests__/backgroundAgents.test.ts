@@ -304,7 +304,8 @@ describe('background spawns (teams OFF) classified by sidecar name', () => {
     seedSidecar({ transcriptLines: [subToolUseLine(), subToolResultLine()] });
     spawnAndLaunch();
 
-    const start = messages.find((m) => m.type === 'subagentToolStart');
+    // Skip the department (subagent_type) row the spawn line itself emits.
+    const start = messages.find((m) => m.type === 'subagentToolStart' && m.toolId === SUB_TOOL_ID);
     expect(start).toBeDefined();
     expect(start!.id).toBe(1);
     expect(start!.parentToolId).toBe(SPAWN_TOOL_ID);

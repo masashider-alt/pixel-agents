@@ -310,6 +310,28 @@ describe('transcriptParser: teammate spawn results (new-harness implicit teams)'
     expect(teammate.isTeamLead).toBe(false);
   });
 
+  it('sends the subagent_type as a Subtask row (SubagentStart hook arrives too early)', () => {
+    processTranscriptLine(
+      1,
+      agentToolUseRecord('toolu_1', 'Agent', {
+        subagent_type: 'kaihatsu',
+        run_in_background: true,
+      }),
+      agents,
+      waitingTimers,
+      permissionTimers,
+    );
+    processTranscriptLine(
+      1,
+      agentToolUseRecord('toolu_2', 'Agent', { subagent_type: 'x', name: 'mate' }),
+      agents,
+      waitingTimers,
+      permissionTimers,
+    );
+    const rows = messages.filter((m) => m.type === 'subagentToolStart');
+    expect(rows.map((m) => [m.parentToolId, m.status])).toEqual([['toolu_1', 'Subtask: kaihatsu']]);
+  });
+
   it('still parks old-style async agent launches as background tools', () => {
     processTranscriptLine(
       1,
